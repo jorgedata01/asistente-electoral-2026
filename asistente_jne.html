@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asistente Electoral Perú 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@300;400;600&display=swap');
+  :root {
+    --rojo: #C8102E; --blanco: #F5F0E8; --oro: #C9A84C;
+    --oscuro: #1A1208; --gris: #6B6255; --panel: #241A0E;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--oscuro); color: var(--blanco);
+    font-family: 'Source Sans 3', sans-serif; min-height: 100vh;
+    display: flex; flex-direction: column;
+    background-image: radial-gradient(ellipse at 20% 20%, rgba(200,16,46,0.08) 0%, transparent 50%),
+                      radial-gradient(ellipse at 80% 80%, rgba(201,168,76,0.06) 0%, transparent 50%);
+  }
+  header {
+    padding: 20px 40px; border-bottom: 1px solid rgba(201,168,76,0.2);
+    display: flex; align-items: center; gap: 16px;
+    background: rgba(0,0,0,0.3); backdrop-filter: blur(10px);
+  }
+  .escudo {
+    width: 48px; height: 48px; background: var(--rojo); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    box-shadow: 0 0 20px rgba(200,16,46,0.4); flex-shrink: 0;
+  }
+  header h1 { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; }
+  header p { font-size: 0.72rem; color: var(--oro); text-transform: uppercase; letter-spacing: 2px; margin-top: 2px; }
+  .modelo-selector { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .modelo-selector label { font-size: 0.72rem; color: var(--gris); text-transform: uppercase; letter-spacing: 1px; }
+  .modelo-selector select {
+    background: var(--panel); border: 1px solid rgba(201,168,76,0.3);
+    color: var(--oro); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; outline: none;
+  }
+  .chat-container {
+    flex: 1; display: flex; flex-direction: column;
+    max-width: 900px; width: 100%; margin: 0 auto; padding: 20px 24px 0;
+  }
+  .sugerencias { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .sugerencia {
+    background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2);
+    color: var(--oro); padding: 7px 14px; border-radius: 20px; font-size: 0.78rem;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .sugerencia:hover { background: rgba(201,168,76,0.18); border-color: var(--oro); }
+  #mensajes {
+    flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+    gap: 16px; padding-bottom: 16px; max-height: calc(100vh - 280px);
+  }
+  #mensajes::-webkit-scrollbar { width: 4px; }
+  #mensajes::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }
+  .mensaje { display: flex; gap: 12px; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .mensaje.usuario { flex-direction: row-reverse; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+  }
+  .mensaje.asistente .avatar { background: var(--rojo); box-shadow: 0 0 12px rgba(200,16,46,0.3); }
+  .mensaje.usuario .avatar { background: rgba(201,168,76,0.2); border: 1px solid rgba(201,168,76,0.3); }
+  .burbuja { max-width: 78%; padding: 14px 18px; border-radius: 16px; font-size: 0.9rem; line-height: 1.6; }
+  .mensaje.asistente .burbuja { background: var(--panel); border: 1px solid rgba(201,168,76,0.1); border-top-left-radius: 4px; }
+  .mensaje.usuario .burbuja { background: var(--rojo); border-top-right-radius: 4px; color: white; }
+  .burbuja strong { color: var(--oro); }
+  .typing { display: flex; gap: 5px; padding: 4px 0; }
+  .typing span { width: 8px; height: 8px; background: var(--oro); border-radius: 50%; animation: bounce 1.2s infinite; opacity: 0.6; }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0);} 30%{transform:translateY(-8px);opacity:1;} }
+  .btn-leer { background:none; border:none; color:var(--gris); cursor:pointer; font-size:14px; padding:4px; margin-left:8px; transition:color 0.2s; }
+  .btn-leer:hover { color: var(--oro); }
+  .input-area {
+    padding: 12px 0 20px; position: sticky; bottom: 0;
+    background: linear-gradient(to top, var(--oscuro) 80%, transparent);
+  }
+  .estado-bar { text-align:center; font-size:0.72rem; color:var(--gris); margin-bottom:10px; }
+  .estado-bar span { color: var(--oro); }
+  .input-wrapper {
+    display: flex; gap: 10px; background: var(--panel);
+    border: 1px solid rgba(201,168,76,0.2); border-radius: 16px;
+    padding: 8px 8px 8px 16px; transition: border-color 0.2s;
+  }
+  .input-wrapper:focus-within { border-color: rgba(201,168,76,0.5); }
+  #pregunta {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--blanco); font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.95rem; resize: none; min-height: 24px; max-height: 120px; line-height: 1.5; padding: 4px 0;
+  }
+  #pregunta::placeholder { color: var(--gris); }
+  .btn-voz {
+    width: 42px; height: 42px; border-radius: 10px; border: 1px solid rgba(201,168,76,0.3);
+    background: transparent; color: var(--oro); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.2s; flex-shrink: 0;
+  }
+  .btn-voz:hover { background: rgba(201,168,76,0.1); }
+  .btn-voz.escuchando { background: rgba(200,16,46,0.2); border-color: var(--rojo); color: var(--rojo); animation: pulso 1s infinite; }
+  @keyframes pulso { 0%,100%{box-shadow:0 0 0 0 rgba(200,16,46,0.4);} 50%{box-shadow:0 0 0 8px rgba(200,16,46,0);} }
+  .btn-enviar {
+    width: 42px; height: 42px; border-radius: 10px; border: none;
+    background: var(--rojo); color: white; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.2s; flex-shrink: 0;
+  }
+  .btn-enviar:hover { background: #a50d26; transform: scale(1.05); }
+  .btn-enviar:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  #cargando-ctx { text-align:center; padding:20px; color:var(--oro); font-size:0.85rem; }
+</style>
+</head>
+<body>
+<header>
+  <div class="escudo">🇵🇪</div>
+  <div>
+    <h1>Asistente Electoral Perú 2026</h1>
+    <p>Planes de Gobierno · 35 Partidos Políticos</p>
+  </div>
+  <div class="modelo-selector">
+    <label>Modelo:</label>
+    <select id="modelo">
+      <option value="gemini-2.5-flash">Gemini Flash (rápido)</option>
+      <option value="gemini-2.5-pro">Gemini Pro (detallado)</option>
+    </select>
+  </div>
+</header>
+
+<div class="chat-container">
+  <div class="sugerencias">
+    <div class="sugerencia" onclick="preguntar(this.textContent)">¿Qué propone cada partido en economía?</div>
+    <div class="sugerencia" onclick="preguntar(this.textContent)">Compara propuestas de salud</div>
+    <div class="sugerencia" onclick="preguntar(this.textContent)">¿Quién tiene mejor plan de seguridad?</div>
+    <div class="sugerencia" onclick="preguntar(this.textContent)">Resumen de propuestas educativas</div>
+  </div>
+
+  <div id="mensajes">
+    <div id="cargando-ctx">⏳ Cargando planes de gobierno...</div>
+  </div>
+
+  <div class="input-area">
+    <div class="estado-bar" id="estado">Cargando contexto...</div>
+    <div class="input-wrapper">
+      <textarea id="pregunta" placeholder="Escribe tu pregunta sobre los planes de gobierno..." rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviar()}"></textarea>
+      <button class="btn-voz" id="btn-voz" onclick="toggleVoz()" title="Hablar">🎤</button>
+      <button class="btn-enviar" id="btn-enviar" onclick="enviar()" disabled>➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_KEY = 'AIzaSyCy1ceYjrBEXxwP0NpOCjp6PWXDrV-s0tM';
+  let contexto = '';
+  let historial = [];
+  let reconocimiento = null;
+  let listo = false;
+
+  document.getElementById('pregunta').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  });
+
+  // Cargar contexto.json automáticamente
+  async function cargarContexto() {
+    try {
+      // Intentar cargar desde la misma carpeta del HTML
+      const response = await fetch('contexto.json');
+      if (!response.ok) throw new Error('No se encontró contexto.json');
+      const data = await response.json();
+
+      // Construir contexto resumido
+      const partidos = Object.keys(data);
+      let textoContexto = `PLANES DE GOBIERNO - ELECCIONES GENERALES PERÚ 2026\n`;
+      textoContexto += `Total de organizaciones políticas: ${partidos.length}\n\n`;
+
+      for (const [nombre, texto] of Object.entries(data)) {
+        textoContexto += `═══ ${nombre} ═══\n${texto}\n\n`;
+      }
+
+      contexto = textoContexto;
+      document.getElementById('cargando-ctx').remove();
+      agregarMensaje('asistente', `✅ ¡Listo! He cargado los planes de gobierno de <strong>${partidos.length} organizaciones políticas</strong> para las Elecciones Generales Perú 2026. Puedes preguntarme sobre cualquier partido, comparar propuestas o buscar temas específicos. Usa el 🎤 para preguntar por voz.`, true);
+      document.getElementById('estado').innerHTML = `✅ <span>${partidos.length} planes cargados</span> · Gemini AI activo`;
+      document.getElementById('btn-enviar').disabled = false;
+      listo = true;
+    } catch (e) {
+      document.getElementById('cargando-ctx').innerHTML = `
+        ⚠️ No se encontró <strong>contexto.json</strong>.<br>
+        Asegúrate de que esté en la misma carpeta que este archivo HTML.<br>
+        <small style="color:#6B6255">Ruta esperada: misma carpeta que asistente_jne.html</small>`;
+      document.getElementById('estado').textContent = '⚠ contexto.json no encontrado';
+    }
+  }
+
+  function agregarMensaje(tipo, texto, conLeer = false) {
+    const div = document.createElement('div');
+    div.className = `mensaje ${tipo}`;
+    div.innerHTML = `
+      <div class="avatar">${tipo === 'asistente' ? '🤖' : '👤'}</div>
+      <div class="burbuja">
+        ${texto}
+        ${conLeer ? `<button class="btn-leer" onclick="leerTexto(this)" title="Escuchar">🔊</button>` : ''}
+      </div>`;
+    document.getElementById('mensajes').appendChild(div);
+    document.getElementById('mensajes').scrollTop = 99999;
+    return div;
+  }
+
+  function mostrarTyping() {
+    const div = document.createElement('div');
+    div.className = 'mensaje asistente'; div.id = 'typing';
+    div.innerHTML = `<div class="avatar">🤖</div><div class="burbuja"><div class="typing"><span></span><span></span><span></span></div></div>`;
+    document.getElementById('mensajes').appendChild(div);
+    document.getElementById('mensajes').scrollTop = 99999;
+  }
+
+  function preguntar(texto) {
+    document.getElementById('pregunta').value = texto;
+    enviar();
+  }
+
+  async function enviar() {
+    const input = document.getElementById('pregunta');
+    const texto = input.value.trim();
+    if (!texto || !listo) return;
+
+    input.value = ''; input.style.height = 'auto';
+    document.getElementById('btn-enviar').disabled = true;
+    agregarMensaje('usuario', texto);
+    historial.push({ role: 'user', parts: [{ text: texto }] });
+    mostrarTyping();
+
+    try {
+      const modelo = document.getElementById('modelo').value;
+      const systemPrompt = `Eres un asistente experto en análisis político electoral del Perú para las Elecciones Generales 2026.
+Tienes acceso a los planes de gobierno REALES y OFICIALES de las organizaciones políticas, extraídos directamente de los documentos presentados ante el JNE.
+Responde SIEMPRE basándote en los documentos proporcionados. Si un partido no menciona algo, indícalo claramente.
+Responde en español, de forma clara, objetiva e imparcial.
+Cuando compares partidos usa formato con nombres en negrita.
+Aquí están los planes de gobierno completos:\n\n${contexto.substring(0, 800000)}`;
+
+      const messages = [
+        { role: 'user', parts: [{ text: systemPrompt }] },
+        { role: 'model', parts: [{ text: 'Entendido. He procesado los planes de gobierno oficiales y estoy listo para responder basándome en esos documentos reales.' }] },
+        ...historial
+      ];
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${API_KEY}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: messages }) }
+      );
+
+      const data = await response.json();
+      document.getElementById('typing')?.remove();
+
+      if (data.error) throw new Error(data.error.message);
+
+      const respuesta = data.candidates[0].content.parts[0].text;
+      const html = respuesta.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+      historial.push({ role: 'model', parts: [{ text: respuesta }] });
+      agregarMensaje('asistente', html, true);
+
+    } catch (err) {
+      document.getElementById('typing')?.remove();
+      agregarMensaje('asistente', `⚠️ Error: ${err.message}`);
+    }
+    document.getElementById('btn-enviar').disabled = false;
+  }
+
+  function leerTexto(btn) {
+    if (speechSynthesis.speaking) { speechSynthesis.cancel(); return; }
+    const texto = btn.parentElement.innerText.replace('🔊','').trim();
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-PE'; u.rate = 1.0;
+    speechSynthesis.speak(u);
+  }
+
+  function toggleVoz() {
+    const btn = document.getElementById('btn-voz');
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      alert('Usa Chrome para reconocimiento de voz.'); return;
+    }
+    if (reconocimiento && btn.classList.contains('escuchando')) {
+      reconocimiento.stop(); btn.classList.remove('escuchando'); btn.textContent = '🎤'; return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    reconocimiento = new SR();
+    reconocimiento.lang = 'es-PE'; reconocimiento.continuous = false; reconocimiento.interimResults = false;
+    reconocimiento.onstart = () => { btn.classList.add('escuchando'); btn.textContent = '⏹'; };
+    reconocimiento.onresult = (e) => {
+      document.getElementById('pregunta').value = e.results[0][0].transcript;
+      btn.classList.remove('escuchando'); btn.textContent = '🎤'; enviar();
+    };
+    reconocimiento.onerror = reconocimiento.onend = () => { btn.classList.remove('escuchando'); btn.textContent = '🎤'; };
+    reconocimiento.start();
+  }
+
+  cargarContexto();
+</script>
+</body>
+</html>
